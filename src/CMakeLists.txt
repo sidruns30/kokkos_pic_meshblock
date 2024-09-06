@@ -1,0 +1,6 @@
+add_executable(main.xc main.cpp include/util.hpp)
+target_include_directories(main.xc PUBLIC ../include)
+target_link_libraries(main.xc PUBLIC Kokkos::kokkos)
+target_link_libraries(main.xc PUBLIC util)
+target_link_libraries(main.xc PUBLIC grid)
+target_link_libraries(main.xc PUBLIC particle_tracker)
