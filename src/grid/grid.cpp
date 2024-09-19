@@ -1,48 +1,274 @@
 #include "../include/grid.hpp"
 
-// We want to divide the grid into boxes of equal volumes
-// For now, let us only divide the grid based on the x coords
-void CreateMeshblockBoundaries(float xmin, float xmax, float ymin, float ymax, 
-                               float zmin, float zmax, int nblocks, std::vector <float> &xmb,
-                               std::vector <float> &ymb, std::vector <float> &zmb)
-{
-    int nblocks_x, nblocks_y, nblocks_z;
-    nblocks_x = nblocks;
-    nblocks_y = 1;
-    nblocks_z = 1;
-    float delta_x_mb = (xmax - xmin) / nblocks_x;
-    float delta_y_mb = (ymax - ymin) / nblocks_y;
-    float delta_z_mb = (zmax - zmin) / nblocks_z;
 
-    for (int i=0; i<nblocks_x+1; i++) xmb.push_back(i * delta_x_mb);
-    for (int i=0; i<nblocks_y+1; i++) ymb.push_back(i * delta_y_mb);
-    for (int i=0; i<nblocks_z+1; i++) zmb.push_back(i * delta_z_mb);
-    return;
+
+/*
+    Return the Meshblock ID of a particle given its position
+    Since most particles are going to be in the same MeshBlock, we
+    want them to be evaluated the fastest.
+    The particles on the faces should be evaluated the second fastest,
+    edges the third fastest and corner casees at the very end
+    Block:                                          Tag:
+    x,y,z contained                                 0
+    yz contained, x < xmin                          1
+    yz contained, x > xmax                          2
+    xz contained, y < ymin                          3
+    xz contained, y > ymax                          4
+    xy contained, z < zmin                          5
+    xy contained, z > zmax                          6
+    z contained, x < xmin, y < ymin                 7
+    z contained, x < xmin, y > ymax                 8
+    z contained, x > xmax, y < ymin                 9
+    z contained, x > xmax, y > ymax                 10
+    y contained, x < xmin, z < zmin                 11
+    y contained, x < xmin, z > zmax                 12
+    y contained, x > xmax, z < zmin                 13
+    y contained, x > xmax, z > zmax                 14
+    x contained, y < ymin, z < zmin                 15
+    x contained, y < ymin, z > zmax                 16
+    x contained, y > ymax, z < zmin                 17
+    x contained, y > ymax, z > zmax                 18
+    x < xmin, y < ymin, z < zmin                    19
+    x < xmin, y < ymin, z > max                     20
+    x < xmin, y > ymax, z < zmin                    21
+    x < xmin, y > ymax, z > zmax                     22
+    x > xmax, y < ymin, z < zmin                    23
+    x > xmax, y < ymin, z > zmax                     24
+    x > xmax, y > ymax, z < zmin                    25
+    x > xmax, y > ymax, z > max                     26
+*/
+
+
+int MeshBlock::ComputeTag(float x, float y, float z) const
+{
+    int tag;
+    // z contained
+    if (z > this-> zmin & z < this->zmax)
+    {
+        // y-z contained
+        if (y > this->ymin & y < this->ymax)
+        {
+            // x, y, z contained
+            if (x > this-> xmin & x < this->xmax)  {return XYZ;}
+            // yz contained, x < xmin
+            else if (x < this->xmin) {return YZXmin;}
+            // yz contained, x > xmax
+            else {return YZXmax;}
+        }
+        // x-z contained
+        else if (x > this->xmin & x < this->xmax)
+        {
+            // xz contained, y < min
+            if (y < this->ymin) {return XZYmin;}
+            // xz contained, y > ymax
+            else {return XZYmax;}
+        }
+    }
+    // x contained, z not conatined
+    else if (x > this->xmin & x < this->xmax)
+    {
+        // x-y contained
+        if (y > this->ymin & y < this->ymax)
+        {
+            // x-y contained, z < zmin
+            if (z < this->zmin) {return XYZmin;}
+            else {return XYZmax;}
+        }
+    }
+
+    // The particle now lies at least in the edge or the corner MeshBlock
+    // Let us do the edges first
+    // We know that the particle does not have x or z coordinate in the block
+
+    // z contained only
+    if (z > this->zmin & z < this->zmax)
+    {
+        if (x < this->xmin)
+        {
+            if (y < this->ymin) {return ZXminYmin;}
+            else {return ZXminYmax;}
+        }
+        else
+        {
+            if (y < this->ymin) {return ZXmaxYmin;}
+            else {return ZXmaxYmax;}
+        }
+    }
+    // y contained only
+    else if (y > this-> ymin & y < this->ymax)
+    {
+        if (x < this->xmin)
+        {
+            if (z < this->zmin) {return YXminZmin;}
+            else {return YXminZmax;}
+        }
+        else
+        {
+            if (z < this->zmin) {return YXmaxZmin;}
+            else {return YXmaxZmax;}
+        }
+
+    }
+    // x contained only
+    else if (x > this-> xmin & x < this->xmax)
+    {
+        if (y < this->ymin)
+        {
+            if (z < this->zmin) {return XYminZmin;}
+            else {return XYminZmax;}
+        }
+        else
+        {
+            if (z < this->zmin) {return XYmaxZmin;}
+            else {return XYmaxZmax;}
+        }
+    }
+    //  In the cases below, the particle contains none of the coordinates
+    //  so it must be in one of the corner cells
+    else
+    {
+        if (x < this-> xmin)
+        {
+            if (y < this-> ymin)
+            {
+                if (z < this->zmin) {return XminYminZmin;}
+                else {return XminYminZmax;}
+            }
+            else
+            {
+                if (z < this-> zmin) {return XminYmaxZmin;}
+                else {return XminYmaxZmax;}
+            }
+        }
+        else
+        {
+            if (y < this-> ymin)
+            {
+                if (z < this->zmin) {return XmaxYminZmin;}
+                else {return XmaxYminZmax;}
+            }
+            else
+            {
+                if (z < this-> zmin) {return XmaxYmaxZmin;}
+                else {return XmaxYmaxZmax;}
+            }
+        }
+    }
 }
 
-
-int ComputeRank(const std::vector<float> &pos, const std::vector <float> &xmb,
-                const std::vector <float> &ymb, const std::vector <float> &zmb)
+const int ComputeTag(const MeshBlock myMeshBlock, const float x, const float y, const float z)
 {
-    int i_xmb, i_ymb, i_zmb;
-    int nblocks_x, nblocks_y, nblocks_z;
-    nblocks_x = xmb.size();
-    nblocks_y = ymb.size();
-    nblocks_z = zmb.size();
+    int tag;
+    // z contained
+    if (z > myMeshBlock.zmin & z < myMeshBlock.zmax)
+    {
+        // y-z contained
+        if (y > myMeshBlock.ymin & y < myMeshBlock.ymax)
+        {
+            // x, y, z contained
+            if (x > myMeshBlock. xmin & x < myMeshBlock.xmax)  {return XYZ;}
+            // yz contained, x < xmin
+            else if (x < myMeshBlock.xmin) {return YZXmin;}
+            // yz contained, x > xmax
+            else {return YZXmax;}
+        }
+        // x-z contained
+        else if (x > myMeshBlock.xmin & x < myMeshBlock.xmax)
+        {
+            // xz contained, y < min
+            if (y < myMeshBlock.ymin) {return XZYmin;}
+            // xz contained, y > ymax
+            else {return XZYmax;}
+        }
+    }
+    // x contained, z not conatined
+    else if (x > myMeshBlock.xmin & x < myMeshBlock.xmax)
+    {
+        // x-y contained
+        if (y > myMeshBlock.ymin & y < myMeshBlock.ymax)
+        {
+            // x-y contained, z < zmin
+            if (z < myMeshBlock.zmin) {return XYZmin;}
+            else {return XYZmax;}
+        }
+    }
 
-    // Find out which block the cell
-    for (int i_xmb=0; i_xmb<nblocks_x; i_xmb++)
-    {
-        if (xmb[i_xmb] > pos[0]) break; 
-    }
-    for (int i_ymb=0; i_ymb<nblocks_y; i_ymb++)
-    {
-        if (ymb[i_ymb] > pos[1]) break; 
-    }
-        for (int i_zmb=0; i_zmb<nblocks_z; i_zmb++)
-    {
-        if (zmb[i_zmb] > pos[2]) break; 
-    }
+    // The particle now lies at least in the edge or the corner MeshBlock
+    // Let us do the edges first
+    // We know that the particle does not have x or z coordinate in the block
 
-    return i_zmb * nblocks_y * nblocks_x + i_ymb * nblocks_x + i_xmb;
+    // z contained only
+    if (z > myMeshBlock.zmin & z < myMeshBlock.zmax)
+    {
+        if (x < myMeshBlock.xmin)
+        {
+            if (y < myMeshBlock.ymin) {return ZXminYmin;}
+            else {return ZXminYmax;}
+        }
+        else
+        {
+            if (y < myMeshBlock.ymin) {return ZXmaxYmin;}
+            else {return ZXmaxYmax;}
+        }
+    }
+    // y contained only
+    else if (y > myMeshBlock. ymin & y < myMeshBlock.ymax)
+    {
+        if (x < myMeshBlock.xmin)
+        {
+            if (z < myMeshBlock.zmin) {return YXminZmin;}
+            else {return YXminZmax;}
+        }
+        else
+        {
+            if (z < myMeshBlock.zmin) {return YXmaxZmin;}
+            else {return YXmaxZmax;}
+        }
+
+    }
+    // x contained only
+    else if (x > myMeshBlock. xmin & x < myMeshBlock.xmax)
+    {
+        if (y < myMeshBlock.ymin)
+        {
+            if (z < myMeshBlock.zmin) {return XYminZmin;}
+            else {return XYminZmax;}
+        }
+        else
+        {
+            if (z < myMeshBlock.zmin) {return XYmaxZmin;}
+            else {return XYmaxZmax;}
+        }
+    }
+    //  In the cases below, the particle contains none of the coordinates
+    //  so it must be in one of the corner cells
+    else
+    {
+        if (x < myMeshBlock. xmin)
+        {
+            if (y < myMeshBlock. ymin)
+            {
+                if (z < myMeshBlock.zmin) {return XminYminZmin;}
+                else {return XminYminZmax;}
+            }
+            else
+            {
+                if (z < myMeshBlock. zmin) {return XminYmaxZmin;}
+                else {return XminYmaxZmax;}
+            }
+        }
+        else
+        {
+            if (y < myMeshBlock. ymin)
+            {
+                if (z < myMeshBlock.zmin) {return XmaxYminZmin;}
+                else {return XmaxYminZmax;}
+            }
+            else
+            {
+                if (z < myMeshBlock. zmin) {return XmaxYmaxZmin;}
+                else {return XmaxYmaxZmax;}
+            }
+        }
+    }
 }

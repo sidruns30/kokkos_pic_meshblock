@@ -1,5 +1,6 @@
 #include "../include/util.hpp"
 
+
 void PrintVec(std::vector <float> vec)
 {
     int nelements = std::min(10, (int)vec.size());
