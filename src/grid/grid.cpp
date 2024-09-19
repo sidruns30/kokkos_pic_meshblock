@@ -1,6 +1,10 @@
-#include "../include/grid.hpp"
+// HH: see comment in main.cpp
+//
+// #include "../include/grid.hpp"
 
+#include "grid.hpp"
 
+#include <iostream>
 
 /*
     Return the Meshblock ID of a particle given its position
@@ -38,237 +42,279 @@
     x > xmax, y > ymax, z > max                     26
 */
 
+// HH: commenting this out for now
+//
+// int MeshBlock::ComputeTag(float x, float y, float z) const {
+//   int tag;
+//   // z contained
+//   if (z > this->zmin & z < this->zmax) {
+//     // y-z contained
+//     if (y > this->ymin & y < this->ymax) {
+//       // x, y, z contained
+//       if (x > this->xmin & x < this->xmax) {
+//         return XYZ;
+//       }
+//       // yz contained, x < xmin
+//       else if (x < this->xmin) {
+//         return YZXmin;
+//       }
+//       // yz contained, x > xmax
+//       else {
+//         return YZXmax;
+//       }
+//     }
+//     // x-z contained
+//     else if (x > this->xmin & x < this->xmax) {
+//       // xz contained, y < min
+//       if (y < this->ymin) {
+//         return XZYmin;
+//       }
+//       // xz contained, y > ymax
+//       else {
+//         return XZYmax;
+//       }
+//     }
+//   }
+//   // x contained, z not conatined
+//   else if (x > this->xmin & x < this->xmax) {
+//     // x-y contained
+//     if (y > this->ymin & y < this->ymax) {
+//       // x-y contained, z < zmin
+//       if (z < this->zmin) {
+//         return XYZmin;
+//       } else {
+//         return XYZmax;
+//       }
+//     }
+//   }
+//
+//   // The particle now lies at least in the edge or the corner MeshBlock
+//   // Let us do the edges first
+//   // We know that the particle does not have x or z coordinate in the block
+//
+//   // z contained only
+//   if (z > this->zmin & z < this->zmax) {
+//     if (x < this->xmin) {
+//       if (y < this->ymin) {
+//         return ZXminYmin;
+//       } else {
+//         return ZXminYmax;
+//       }
+//     } else {
+//       if (y < this->ymin) {
+//         return ZXmaxYmin;
+//       } else {
+//         return ZXmaxYmax;
+//       }
+//     }
+//   }
+//   // y contained only
+//   else if (y > this->ymin & y < this->ymax) {
+//     if (x < this->xmin) {
+//       if (z < this->zmin) {
+//         return YXminZmin;
+//       } else {
+//         return YXminZmax;
+//       }
+//     } else {
+//       if (z < this->zmin) {
+//         return YXmaxZmin;
+//       } else {
+//         return YXmaxZmax;
+//       }
+//     }
+//
+//   }
+//   // x contained only
+//   else if (x > this->xmin & x < this->xmax) {
+//     if (y < this->ymin) {
+//       if (z < this->zmin) {
+//         return XYminZmin;
+//       } else {
+//         return XYminZmax;
+//       }
+//     } else {
+//       if (z < this->zmin) {
+//         return XYmaxZmin;
+//       } else {
+//         return XYmaxZmax;
+//       }
+//     }
+//   }
+//   //  In the cases below, the particle contains none of the coordinates
+//   //  so it must be in one of the corner cells
+//   else {
+//     if (x < this->xmin) {
+//       if (y < this->ymin) {
+//         if (z < this->zmin) {
+//           return XminYminZmin;
+//         } else {
+//           return XminYminZmax;
+//         }
+//       } else {
+//         if (z < this->zmin) {
+//           return XminYmaxZmin;
+//         } else {
+//           return XminYmaxZmax;
+//         }
+//       }
+//     } else {
+//       if (y < this->ymin) {
+//         if (z < this->zmin) {
+//           return XmaxYminZmin;
+//         } else {
+//           return XmaxYminZmax;
+//         }
+//       } else {
+//         if (z < this->zmin) {
+//           return XmaxYmaxZmin;
+//         } else {
+//           return XmaxYmaxZmax;
+//         }
+//       }
+//     }
+//   }
+// }
 
-int MeshBlock::ComputeTag(float x, float y, float z) const
-{
-    int tag;
-    // z contained
-    if (z > this-> zmin & z < this->zmax)
-    {
-        // y-z contained
-        if (y > this->ymin & y < this->ymax)
-        {
-            // x, y, z contained
-            if (x > this-> xmin & x < this->xmax)  {return XYZ;}
-            // yz contained, x < xmin
-            else if (x < this->xmin) {return YZXmin;}
-            // yz contained, x > xmax
-            else {return YZXmax;}
-        }
-        // x-z contained
-        else if (x > this->xmin & x < this->xmax)
-        {
-            // xz contained, y < min
-            if (y < this->ymin) {return XZYmin;}
-            // xz contained, y > ymax
-            else {return XZYmax;}
-        }
+// HH: we talked about this during the meeting
+// ... plus, since we're not modifying the MeshBlock, it should be passed by const reference
+//
+// const int ComputeTag(const MeshBlock myMeshBlock,
+//                      const float     x,
+//                      const float     y,
+//                      const float     z) {
+auto ComputeTag(const MeshBlock& myMeshBlock, double x, double y, double z)
+  -> short {
+  // HH: this is unused
+  //
+  // short tag;
+
+  // z contained
+  if (z > myMeshBlock.zmin and z < myMeshBlock.zmax) {
+    // y-z contained
+    if (y > myMeshBlock.ymin and y < myMeshBlock.ymax) {
+      // x, y, z contained
+      if (x > myMeshBlock.xmin and x < myMeshBlock.xmax) {
+        return XYZ;
+      }
+      // yz contained, x < xmin
+      else if (x < myMeshBlock.xmin) {
+        return YZXmin;
+      }
+      // yz contained, x > xmax
+      else {
+        return YZXmax;
+      }
     }
-    // x contained, z not conatined
-    else if (x > this->xmin & x < this->xmax)
-    {
-        // x-y contained
-        if (y > this->ymin & y < this->ymax)
-        {
-            // x-y contained, z < zmin
-            if (z < this->zmin) {return XYZmin;}
-            else {return XYZmax;}
-        }
+    // x-z contained
+    else if (x > myMeshBlock.xmin and x < myMeshBlock.xmax) {
+      // xz contained, y < min
+      if (y < myMeshBlock.ymin) {
+        return XZYmin;
+      }
+      // xz contained, y > ymax
+      else {
+        return XZYmax;
+      }
+    }
+  }
+  // x contained, z not conatined
+  else if (x > myMeshBlock.xmin and x < myMeshBlock.xmax) {
+    // x-y contained
+    if (y > myMeshBlock.ymin and y < myMeshBlock.ymax) {
+      // x-y contained, z < zmin
+      if (z < myMeshBlock.zmin) {
+        return XYZmin;
+      } else {
+        return XYZmax;
+      }
+    }
+  }
+
+  // The particle now lies at least in the edge or the corner MeshBlock
+  // Let us do the edges first
+  // We know that the particle does not have x or z coordinate in the block
+
+  // z contained only
+  if (z > myMeshBlock.zmin and z < myMeshBlock.zmax) {
+    if (x < myMeshBlock.xmin) {
+      if (y < myMeshBlock.ymin) {
+        return ZXminYmin;
+      } else {
+        return ZXminYmax;
+      }
+    } else {
+      if (y < myMeshBlock.ymin) {
+        return ZXmaxYmin;
+      } else {
+        return ZXmaxYmax;
+      }
+    }
+  }
+  // y contained only
+  else if (y > myMeshBlock.ymin and y < myMeshBlock.ymax) {
+    if (x < myMeshBlock.xmin) {
+      if (z < myMeshBlock.zmin) {
+        return YXminZmin;
+      } else {
+        return YXminZmax;
+      }
+    } else {
+      if (z < myMeshBlock.zmin) {
+        return YXmaxZmin;
+      } else {
+        return YXmaxZmax;
+      }
     }
 
-    // The particle now lies at least in the edge or the corner MeshBlock
-    // Let us do the edges first
-    // We know that the particle does not have x or z coordinate in the block
-
-    // z contained only
-    if (z > this->zmin & z < this->zmax)
-    {
-        if (x < this->xmin)
-        {
-            if (y < this->ymin) {return ZXminYmin;}
-            else {return ZXminYmax;}
-        }
-        else
-        {
-            if (y < this->ymin) {return ZXmaxYmin;}
-            else {return ZXmaxYmax;}
-        }
+  }
+  // x contained only
+  else if (x > myMeshBlock.xmin and x < myMeshBlock.xmax) {
+    if (y < myMeshBlock.ymin) {
+      if (z < myMeshBlock.zmin) {
+        return XYminZmin;
+      } else {
+        return XYminZmax;
+      }
+    } else {
+      if (z < myMeshBlock.zmin) {
+        return XYmaxZmin;
+      } else {
+        return XYmaxZmax;
+      }
     }
-    // y contained only
-    else if (y > this-> ymin & y < this->ymax)
-    {
-        if (x < this->xmin)
-        {
-            if (z < this->zmin) {return YXminZmin;}
-            else {return YXminZmax;}
+  }
+  //  In the cases below, the particle contains none of the coordinates
+  //  so it must be in one of the corner cells
+  else {
+    if (x < myMeshBlock.xmin) {
+      if (y < myMeshBlock.ymin) {
+        if (z < myMeshBlock.zmin) {
+          return XminYminZmin;
+        } else {
+          return XminYminZmax;
         }
-        else
-        {
-            if (z < this->zmin) {return YXmaxZmin;}
-            else {return YXmaxZmax;}
+      } else {
+        if (z < myMeshBlock.zmin) {
+          return XminYmaxZmin;
+        } else {
+          return XminYmaxZmax;
         }
-
+      }
+    } else {
+      if (y < myMeshBlock.ymin) {
+        if (z < myMeshBlock.zmin) {
+          return XmaxYminZmin;
+        } else {
+          return XmaxYminZmax;
+        }
+      } else {
+        if (z < myMeshBlock.zmin) {
+          return XmaxYmaxZmin;
+        } else {
+          return XmaxYmaxZmax;
+        }
+      }
     }
-    // x contained only
-    else if (x > this-> xmin & x < this->xmax)
-    {
-        if (y < this->ymin)
-        {
-            if (z < this->zmin) {return XYminZmin;}
-            else {return XYminZmax;}
-        }
-        else
-        {
-            if (z < this->zmin) {return XYmaxZmin;}
-            else {return XYmaxZmax;}
-        }
-    }
-    //  In the cases below, the particle contains none of the coordinates
-    //  so it must be in one of the corner cells
-    else
-    {
-        if (x < this-> xmin)
-        {
-            if (y < this-> ymin)
-            {
-                if (z < this->zmin) {return XminYminZmin;}
-                else {return XminYminZmax;}
-            }
-            else
-            {
-                if (z < this-> zmin) {return XminYmaxZmin;}
-                else {return XminYmaxZmax;}
-            }
-        }
-        else
-        {
-            if (y < this-> ymin)
-            {
-                if (z < this->zmin) {return XmaxYminZmin;}
-                else {return XmaxYminZmax;}
-            }
-            else
-            {
-                if (z < this-> zmin) {return XmaxYmaxZmin;}
-                else {return XmaxYmaxZmax;}
-            }
-        }
-    }
-}
-
-const int ComputeTag(const MeshBlock myMeshBlock, const float x, const float y, const float z)
-{
-    int tag;
-    // z contained
-    if (z > myMeshBlock.zmin & z < myMeshBlock.zmax)
-    {
-        // y-z contained
-        if (y > myMeshBlock.ymin & y < myMeshBlock.ymax)
-        {
-            // x, y, z contained
-            if (x > myMeshBlock. xmin & x < myMeshBlock.xmax)  {return XYZ;}
-            // yz contained, x < xmin
-            else if (x < myMeshBlock.xmin) {return YZXmin;}
-            // yz contained, x > xmax
-            else {return YZXmax;}
-        }
-        // x-z contained
-        else if (x > myMeshBlock.xmin & x < myMeshBlock.xmax)
-        {
-            // xz contained, y < min
-            if (y < myMeshBlock.ymin) {return XZYmin;}
-            // xz contained, y > ymax
-            else {return XZYmax;}
-        }
-    }
-    // x contained, z not conatined
-    else if (x > myMeshBlock.xmin & x < myMeshBlock.xmax)
-    {
-        // x-y contained
-        if (y > myMeshBlock.ymin & y < myMeshBlock.ymax)
-        {
-            // x-y contained, z < zmin
-            if (z < myMeshBlock.zmin) {return XYZmin;}
-            else {return XYZmax;}
-        }
-    }
-
-    // The particle now lies at least in the edge or the corner MeshBlock
-    // Let us do the edges first
-    // We know that the particle does not have x or z coordinate in the block
-
-    // z contained only
-    if (z > myMeshBlock.zmin & z < myMeshBlock.zmax)
-    {
-        if (x < myMeshBlock.xmin)
-        {
-            if (y < myMeshBlock.ymin) {return ZXminYmin;}
-            else {return ZXminYmax;}
-        }
-        else
-        {
-            if (y < myMeshBlock.ymin) {return ZXmaxYmin;}
-            else {return ZXmaxYmax;}
-        }
-    }
-    // y contained only
-    else if (y > myMeshBlock. ymin & y < myMeshBlock.ymax)
-    {
-        if (x < myMeshBlock.xmin)
-        {
-            if (z < myMeshBlock.zmin) {return YXminZmin;}
-            else {return YXminZmax;}
-        }
-        else
-        {
-            if (z < myMeshBlock.zmin) {return YXmaxZmin;}
-            else {return YXmaxZmax;}
-        }
-
-    }
-    // x contained only
-    else if (x > myMeshBlock. xmin & x < myMeshBlock.xmax)
-    {
-        if (y < myMeshBlock.ymin)
-        {
-            if (z < myMeshBlock.zmin) {return XYminZmin;}
-            else {return XYminZmax;}
-        }
-        else
-        {
-            if (z < myMeshBlock.zmin) {return XYmaxZmin;}
-            else {return XYmaxZmax;}
-        }
-    }
-    //  In the cases below, the particle contains none of the coordinates
-    //  so it must be in one of the corner cells
-    else
-    {
-        if (x < myMeshBlock. xmin)
-        {
-            if (y < myMeshBlock. ymin)
-            {
-                if (z < myMeshBlock.zmin) {return XminYminZmin;}
-                else {return XminYminZmax;}
-            }
-            else
-            {
-                if (z < myMeshBlock. zmin) {return XminYmaxZmin;}
-                else {return XminYmaxZmax;}
-            }
-        }
-        else
-        {
-            if (y < myMeshBlock. ymin)
-            {
-                if (z < myMeshBlock.zmin) {return XmaxYminZmin;}
-                else {return XmaxYminZmax;}
-            }
-            else
-            {
-                if (z < myMeshBlock. zmin) {return XmaxYmaxZmin;}
-                else {return XmaxYmaxZmax;}
-            }
-        }
-    }
+  }
 }

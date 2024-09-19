@@ -1,0 +1,7 @@
+build
+
+*.mp4
+*.mov
+*.png
+
+*.log
