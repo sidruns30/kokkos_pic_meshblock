@@ -59,40 +59,57 @@ void PushParticles( std::size_t           nparticles,
                     double                    dt) {
 
   // Array that keeps track of the number of particles sent to each neighbor
-  Kokkos::View<size_t[28], CudaSpace> tag_ctr_arr;
-  Kokkos::View<double[6],  CudaSpace> MB_bounds;
+  Kokkos::View<size_t[28], CudaSpace> tag_ctr_arr("tag counter array");
+  Kokkos::View<double[6],  CudaSpace> MB_bounds("Meshblock bounds array");
   Kokkos::deep_copy(MB_bounds, MB_bounds_h);
 
-  // SS: A bit suspicious if this enum will be captured by the Kokkos::lambda...
-  enum IndexPosition {
-                      XYZ          = 0,
-                      YZXmin       = 1,
-                      YZXmax       = 2,
-                      XZYmin       = 3,
-                      XZYmax       = 4,
-                      XYZmin       = 5,
-                      XYZmax       = 6,
-                      ZXminYmin    = 7,
-                      ZXminYmax    = 8,
-                      ZXmaxYmin    = 9,
-                      ZXmaxYmax    = 10,
-                      YXminZmin    = 11,
-                      YXminZmax    = 12,
-                      YXmaxZmin    = 13,
-                      YXmaxZmax    = 14,
-                      XYminZmin    = 15,
-                      XYminZmax    = 16,
-                      XYmaxZmin    = 17,
-                      XYmaxZmax    = 18,
-                      XminYminZmin = 19,
-                      XminYminZmax = 20,
-                      XminYmaxZmin = 21,
-                      XminYmaxZmax = 22,
-                      XmaxYminZmin = 23,
-                      XmaxYminZmax = 24,
-                      XmaxYmaxZmin = 25,
-                      XmaxYmaxZmax = 26,
-                      BDRY_OUT     = 27};
+  // SS: Changed enum to a bunch of size_t's so hopefully everything is sent
+  //     to the GPU
+  const size_t XYZ             = 0;
+  const size_t YZXmin          = 1;
+  const size_t YZXmax          = 2;
+  const size_t XZYmin          = 3;
+  const size_t XZYmax          = 4;
+  const size_t XYZmin          = 5;
+  const size_t XYZmax          = 6;
+  const size_t ZXminYmin       = 7;
+  const size_t ZXminYmax       = 8;
+  const size_t ZXmaxYmin       = 9;
+  const size_t ZXmaxYmax       = 10;
+  const size_t YXminZmin       = 11;
+  const size_t YXminZmax       = 12;
+  const size_t YXmaxZmin       = 13;
+  const size_t YXmaxZmax       = 14;
+  const size_t XYminZmin       = 15;
+  const size_t XYminZmax       = 16;
+  const size_t XYmaxZmin       = 17;
+  const size_t XYmaxZmax       = 18;
+  const size_t XminYminZmin    = 19;
+  const size_t XminYminZmax    = 20;
+  const size_t XminYmaxZmin    = 21;
+  const size_t XminYmaxZmax    = 22;
+  const size_t XmaxYminZmin    = 23;
+  const size_t XmaxYminZmax    = 24;
+  const size_t XmaxYmaxZmin    = 25;
+  const size_t XmaxYmaxZmax    = 26;
+  const size_t BDRY_OUT        = 27;
+  
+  const double xmin = MB_bounds_h(0);
+  const double xmax = MB_bounds_h(1);
+  const double ymin = MB_bounds_h(2);
+  const double ymax = MB_bounds_h(3);
+  const double zmin = MB_bounds_h(4);
+  const double zmax = MB_bounds_h(5);
+
+
+  /* SS:  The next long bit is to compute the tag
+          I am currently not sure how I can take a KOKKOS_INLINE_FUNCTION
+          e.g., `ComputeTag' from outside and put it inside this lambda.
+          Therefore, I am performing the compute tag operation explicitly
+          inside this lambda.
+          Additionally, I don't know how to define the MeshBlock class on
+          the device. So I pass the MB_bounds Kokkos view. 
+  */
 
   Kokkos::parallel_for(
     "Particle pusher loop",
@@ -102,44 +119,30 @@ void PushParticles( std::size_t           nparticles,
       y_arr(p) += vy_arr(p) * dt;
       z_arr(p) += vz_arr(p) * dt;
 
-      double x = x_arr(p);
-      double y = y_arr(p);
-      double z = z_arr(p);
+      const double x = x_arr(p);
+      const double y = y_arr(p);
+      const double z = z_arr(p);
 
-      double xmin = MB_bounds(0);
-      double xmax = MB_bounds(1);
-      double ymin = MB_bounds(2);
-      double ymax = MB_bounds(3);
-      double zmin = MB_bounds(4);
-      double zmax = MB_bounds(5);
-
-      /* SS:  The next long bit is to compute the tag
-              I am currently not sure how I can take a KOKKOS_INLINE_FUNCTION
-              e.g., `ComputeTag' from outside and put it inside this lambda.
-              Therefore, I am performing the compute tag operation explicitly
-              inside this lambda.
-              Additionally, I don't know how to define the MeshBlock class on
-              the device. So I pass the MB_bounds Kokkos view. 
-      */
+      
       if (z > zmin and z < zmax) {
       // y-z contained
       if (y > ymin and y < ymax) {
         // x, y, z contained
         if (x > xmin and x < xmax) {
-            //x_arr(p) = XYZ;
-            //tag_ctr_arr(tag_arr(p)) += 1;
+            tag_arr(p) = XYZ;
+            Kokkos::atomic_increment(&tag_ctr_arr(XYZ));
             return;
         }
         // yz contained, x < xmin
         else if (x < xmin) {
-          //tag_arr(p) = YZXmin;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = YZXmin;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
         // yz contained, x > xmax
         else {
-          //tag_arr(p) = YZXmax;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = YZXmax;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -147,14 +150,14 @@ void PushParticles( std::size_t           nparticles,
       else if (x > xmin and x < xmax) {
         // xz contained, y < min
         if (y < ymin) {
-          //tag_arr(p) = XZYmin;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = XZYmin;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
         // xz contained, y > ymax
         else {
-          //tag_arr(p) = XZYmax;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = XZYmax;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -165,12 +168,12 @@ void PushParticles( std::size_t           nparticles,
       if (y > ymin and y < ymax) {
         // x-y contained, z < zmin
         if (z < zmin) {
-          //tag_arr(p) = XYZmin;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = XYZmin;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
-          //tag_arr(p) = XYZmax;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = XYZmax;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -182,22 +185,22 @@ void PushParticles( std::size_t           nparticles,
     if (z > zmin and z < zmax) {
       if (x < xmin) {
         if (y < ymin) {
-          //tag_arr(p) = ZXminYmin;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = ZXminYmin;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
-          //tag_arr(p) = ZXminYmax;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = ZXminYmax;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       } else {
         if (y < ymin) {
-          //tag_arr(p) = ZXmaxYmin;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = ZXmaxYmin;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
-          //tag_arr(p) = ZXmaxYmax;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = ZXmaxYmax;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -206,22 +209,22 @@ void PushParticles( std::size_t           nparticles,
     else if (y > ymin and y < ymax) {
       if (x < xmin) {
         if (z < zmin) {
-          //tag_arr(p) = YXminZmin;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = YXminZmin;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
-          //tag_arr(p) = YXminZmax;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = YXminZmax;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       } else {
         if (z < zmin) {
-          //tag_arr(p) = YXmaxZmin;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = YXmaxZmin;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
-          //tag_arr(p) = YXmaxZmax;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = YXmaxZmax;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -230,22 +233,22 @@ void PushParticles( std::size_t           nparticles,
     else if (x > xmin and x < xmax) {
       if (y < ymin) {
         if (z < zmin) {
-          //tag_arr(p) = XYminZmin;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = XYminZmin;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
-          //tag_arr(p) = XYminZmax;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = XYminZmax;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       } else {
         if (z < zmin) {
-          //tag_arr(p) = XYmaxZmin;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = XYmaxZmin;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
-          //tag_arr(p) = XYmaxZmax;
-          //tag_ctr_arr(tag_arr(p)) += 1;
+          tag_arr(p) = XYmaxZmax;
+          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -256,44 +259,44 @@ void PushParticles( std::size_t           nparticles,
       if (x < xmin) {
         if (y < ymin) {
           if (z < zmin) {
-            //tag_arr(p) = XminYminZmin;
-            //tag_ctr_arr(tag_arr(p)) += 1;
+            tag_arr(p) = XminYminZmin;
+            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           } else {
-            //tag_arr(p) = XminYminZmax;
-            //tag_ctr_arr(tag_arr(p)) += 1;
+            tag_arr(p) = XminYminZmax;
+            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           }
         } else {
           if (z < zmin) {
-            //tag_arr(p) = XminYmaxZmin;
-            //tag_ctr_arr(tag_arr(p)) += 1;
+            tag_arr(p) = XminYmaxZmin;
+            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           } else {
-            //tag_arr(p) = XminYmaxZmax;
-            //tag_ctr_arr(tag_arr(p)) += 1;
+            tag_arr(p) = XminYmaxZmax;
+            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           }
         }
       } else {
         if (y < ymin) {
           if (z < zmin) {
-            //tag_arr(p) = XmaxYminZmin;
-            //tag_ctr_arr(tag_arr(p)) += 1;
+            tag_arr(p) = XmaxYminZmin;
+            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           } else {
-            //tag_arr(p) = XmaxYminZmax;
-            //tag_ctr_arr(tag_arr(p)) += 1;
+            tag_arr(p) = XmaxYminZmax;
+            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           }
         } else {
           if (z < zmin) {
-            //tag_arr(p) = XmaxYmaxZmin;
-            //tag_ctr_arr(tag_arr(p)) += 1;
+            tag_arr(p) = XmaxYmaxZmin;
+            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           } else {
-            //tag_arr(p) = XmaxYmaxZmax;
-            //tag_ctr_arr(tag_arr(p)) += 1;
+            tag_arr(p) = XmaxYmaxZmax;
+            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           }
         }
@@ -303,7 +306,7 @@ void PushParticles( std::size_t           nparticles,
     });
 
   // End of Kokkos::Lambda and parallel for
-  Kokkos::deep_copy(tag_ctr_arr_h, tag_ctr_arr);
+  //Kokkos::deep_copy(tag_ctr_arr_h, tag_ctr_arr);
 
 }
 
