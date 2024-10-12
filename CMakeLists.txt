@@ -17,13 +17,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # HH: see my comment in src/utils/CMakeLists.txt
 
-include(FetchContent)
-FetchContent_Declare(
-  Kokkos
-  GIT_REPOSITORY https://github.com/kokkos/kokkos.git
-  GIT_TAG master
-)
-FetchContent_MakeAvailable(Kokkos)
+#include(FetchContent)
+#FetchContent_Declare(
+#  Kokkos
+#  GIT_REPOSITORY https://github.com/kokkos/kokkos.git
+#  GIT_TAG master
+#)
+#FetchContent_MakeAvailable(Kokkos)
+
+find_package(Kokkos REQUIRED HINTS /home/siddhant/kokkos-install)
+
 
 # HH: include the headers for all libraries here and link to kokkos
 #
