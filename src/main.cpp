@@ -73,6 +73,7 @@ auto main(int argc, char* argv[]) -> int {
                   dt);
     
   }
+  Kokkos::fence();
   std::cout << "Particle push successful" << std::endl;
   Kokkos::finalize();
 

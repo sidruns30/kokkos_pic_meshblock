@@ -136,13 +136,13 @@ void PushParticles( std::size_t           nparticles,
         // yz contained, x < xmin
         else if (x < xmin) {
           tag_arr(p) = YZXmin;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
         // yz contained, x > xmax
         else {
           tag_arr(p) = YZXmax;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -151,13 +151,13 @@ void PushParticles( std::size_t           nparticles,
         // xz contained, y < min
         if (y < ymin) {
           tag_arr(p) = XZYmin;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
         // xz contained, y > ymax
         else {
           tag_arr(p) = XZYmax;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -169,11 +169,11 @@ void PushParticles( std::size_t           nparticles,
         // x-y contained, z < zmin
         if (z < zmin) {
           tag_arr(p) = XYZmin;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
           tag_arr(p) = XYZmax;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -186,21 +186,21 @@ void PushParticles( std::size_t           nparticles,
       if (x < xmin) {
         if (y < ymin) {
           tag_arr(p) = ZXminYmin;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
           tag_arr(p) = ZXminYmax;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       } else {
         if (y < ymin) {
           tag_arr(p) = ZXmaxYmin;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
           tag_arr(p) = ZXmaxYmax;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -210,21 +210,21 @@ void PushParticles( std::size_t           nparticles,
       if (x < xmin) {
         if (z < zmin) {
           tag_arr(p) = YXminZmin;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
           tag_arr(p) = YXminZmax;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       } else {
         if (z < zmin) {
           tag_arr(p) = YXmaxZmin;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
           tag_arr(p) = YXmaxZmax;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -234,21 +234,21 @@ void PushParticles( std::size_t           nparticles,
       if (y < ymin) {
         if (z < zmin) {
           tag_arr(p) = XYminZmin;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
           tag_arr(p) = XYminZmax;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       } else {
         if (z < zmin) {
           tag_arr(p) = XYmaxZmin;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         } else {
           tag_arr(p) = XYmaxZmax;
-          //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+          Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
           return;
         }
       }
@@ -260,21 +260,21 @@ void PushParticles( std::size_t           nparticles,
         if (y < ymin) {
           if (z < zmin) {
             tag_arr(p) = XminYminZmin;
-            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+            Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           } else {
             tag_arr(p) = XminYminZmax;
-            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+            Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           }
         } else {
           if (z < zmin) {
             tag_arr(p) = XminYmaxZmin;
-            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+            Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           } else {
             tag_arr(p) = XminYmaxZmax;
-            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+            Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           }
         }
@@ -282,21 +282,21 @@ void PushParticles( std::size_t           nparticles,
         if (y < ymin) {
           if (z < zmin) {
             tag_arr(p) = XmaxYminZmin;
-            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+            Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           } else {
             tag_arr(p) = XmaxYminZmax;
-            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+            Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           }
         } else {
           if (z < zmin) {
             tag_arr(p) = XmaxYmaxZmin;
-            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+            Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           } else {
             tag_arr(p) = XmaxYmaxZmax;
-            //Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
+            Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
             return;
           }
         }
@@ -309,5 +309,3 @@ void PushParticles( std::size_t           nparticles,
   //Kokkos::deep_copy(tag_ctr_arr_h, tag_ctr_arr);
 
 }
-
-// 
