@@ -1,6 +1,3 @@
-// HH: #include's go after the preprocessor directives
-// #include "util.hpp"
-
 #ifndef GRID_H
 #define GRID_H
 
@@ -8,6 +5,9 @@
 
 #include <iostream>
 
+/*
+  SS: Commenting this out for now since I don't know how to send
+      the enum to the GPU
 enum IndexPosition {
   XYZ          = 0,
   YZXmin       = 1,
@@ -38,25 +38,8 @@ enum IndexPosition {
   XmaxYmaxZmax = 26,
   BDRY_OUT     = 27
 };
-
-/*
-    (1) Create a MeshBlock and cells that are defined by
-        xi_min_mb, dxi_mb; i=(1,2,3)
-    (2) Create neighboring Meshblocks defined by:
-        faces, edges, vertices
-        xy_z_lower, xy_z_upper, yz_x_lower,
-        yz_x_upper, xz_y_lower, xz_y_upper
-        x_y_lower_z_lower, x_y_lower_z_upper,
-        x_y_upper_z_lower, x_y_upper_z_upper, ...
-        (6 + 8 + 8 = 22 neighbors)
-    (3) Add functions to traverse through the cell given
-        a Meshblock
 */
 
-// HH: if you only have "public" fields, there is really no reason for this to be a class
-//
-// class MeshBlock {
-// public:
 
 struct MeshBlock {
   float xmin, xmax, ymin, ymax, zmin, zmax;
@@ -77,21 +60,6 @@ struct MeshBlock {
     std::cout << "MeshBlock Initialized" << std::endl;
   }
 
-  // HH: just for visual clarity
-  //
-  // int ComputeTag(float x, float y, float z) const;
-  // HH: commenting this out for now
-  //
-  // auto ComputeTag(double x, double y, double z) const -> int;
 };
-
-// HH: we talked about this during the meeting
-//
-// const int ComputeTag(const MeshBlock myMeshBlock,
-//                      const float     x,
-//                      const float     y,
-//                      const float     z);
-auto ComputeTag(const MeshBlock& myMeshBlock, double x, double y, double z)
-  -> short;
 
 #endif

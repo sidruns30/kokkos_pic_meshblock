@@ -1,15 +1,6 @@
-// HH: this `../` in include statements is typically a bad practice
-//... if you want to have the headers separately, just defined their path in CMakeLists.txt
-
-// #include "../include/grid.hpp"
-// #include "../include/particle_tracker.hpp"
-// #include "../include/util.hpp"
-
 #include "grid.hpp"
 #include "particle_tracker.hpp"
 #include "util.hpp"
-
-#include <Kokkos_Core.hpp>
 
 auto main(int argc, char* argv[]) -> int {
   // Set boundaries to the grid
@@ -38,13 +29,25 @@ auto main(int argc, char* argv[]) -> int {
     double        dt         = 0.1;
 
     // Initialize Particle Arrays
-    Kokkos::View<short*>  tag_arr("Tag array", nparticles);
-    Kokkos::View<double*> x_arr("x-position array", nparticles);
-    Kokkos::View<double*> y_arr("y-position array", nparticles);
-    Kokkos::View<double*> z_arr("z-position array", nparticles);
-    Kokkos::View<double*> vx_arr("x-velocity array", nparticles);
-    Kokkos::View<double*> vy_arr("y-velocity array", nparticles);
-    Kokkos::View<double*> vz_arr("z-velocity array", nparticles);
+    // SS: Just being a bit more explicit about what memory space the Views are initialized
+    Kokkos::View<short*,      CudaSpace>  tag_arr("Tag array", nparticles);
+    Kokkos::View<double*,     CudaSpace>  x_arr("x-position array", nparticles);
+    Kokkos::View<double*,     CudaSpace>  y_arr("y-position array", nparticles);
+    Kokkos::View<double*,     CudaSpace>  z_arr("z-position array", nparticles);
+    Kokkos::View<double*,     CudaSpace>  vx_arr("x-velocity array", nparticles);
+    Kokkos::View<double*,     CudaSpace>  vy_arr("y-velocity array", nparticles);
+    Kokkos::View<double*,     CudaSpace>  vz_arr("z-velocity array", nparticles);
+    Kokkos::View<double[6],   Host>  MB_bounds_h("Bounds of the MeshBlock");
+    Kokkos::View<size_t[28],  Host>  tag_ctr_arr_h("Tag counter array");
+
+    // Populate the MB bounds array on Host
+    MB_bounds_h(0) = myMeshBlock.xmin;
+    MB_bounds_h(1) = myMeshBlock.xmax;
+    MB_bounds_h(2) = myMeshBlock.ymin;
+    MB_bounds_h(3) = myMeshBlock.ymax;
+    MB_bounds_h(4) = myMeshBlock.zmin;
+    MB_bounds_h(5) = myMeshBlock.zmax;
+
 
     InitializeParticleArrays(nparticles,
                              myMeshBlock,
@@ -55,9 +58,11 @@ auto main(int argc, char* argv[]) -> int {
                              vx_arr,
                              vy_arr,
                              vz_arr);
+    
     PushParticles(nparticles,
-                  myMeshBlock,
+                  MB_bounds_h,
                   tag_arr,
+                  tag_ctr_arr_h,
                   x_arr,
                   y_arr,
                   z_arr,
@@ -65,14 +70,10 @@ auto main(int argc, char* argv[]) -> int {
                   vy_arr,
                   vz_arr,
                   dt);
+    
   }
+  std::cout << "Particle push successful" << std::endl;
   Kokkos::finalize();
-
-  // Make Kokkos arrays for particles
-  /*
-    Question: view is created on the cpu. Would accessing it on the gpu be a lot slower?
-    HH: yes, in fact infinitely slower, since you will not be able to access it at all.
-  */
 
   return 0;
 }
