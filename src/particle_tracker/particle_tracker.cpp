@@ -306,6 +306,90 @@ void PushParticles( std::size_t           nparticles,
     });
 
   // End of Kokkos::Lambda and parallel for
-  //Kokkos::deep_copy(tag_ctr_arr_h, tag_ctr_arr);
+  Kokkos::deep_copy(tag_ctr_arr_h, tag_ctr_arr);
 
+  /* SS:  Allocating new arrays to store the particles indexed by the tag value
+          A bit messy since there are 27 different tag arrays. We can package the
+          positions and velocities of the same tag particles into the same array
+  */
+  Kokkos::View<double *,  CudaSpace> tag_array_XYZ          ("particles XYZ",           6 * tag_ctr_arr_h(XYZ));
+  Kokkos::View<double *,  CudaSpace> tag_array_YZXmin       ("particles YZXmin",        6 * tag_ctr_arr_h(YZXmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_YZXmax       ("particles YZXmax",        6 * tag_ctr_arr_h(YZXmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_XZYmin       ("particles XZYmin",        6 * tag_ctr_arr_h(XZYmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_XZYmax       ("particles XZYmax",        6 * tag_ctr_arr_h(XZYmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_XYZmin       ("particles XYZmin",        6 * tag_ctr_arr_h(XYZmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_XYZmax       ("particles XYZmax",        6 * tag_ctr_arr_h(XYZmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_ZXminYmin    ("particles ZXminYmin",     6 * tag_ctr_arr_h(ZXminYmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_ZXminYmax    ("particles ZXminYmax",     6 * tag_ctr_arr_h(ZXminYmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_ZXmaxYmin    ("particles ZXmaxYmin",     6 * tag_ctr_arr_h(ZXmaxYmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_ZXmaxYmax    ("particles ZXmaxYmax",     6 * tag_ctr_arr_h(ZXmaxYmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_YXminZmin    ("particles YXminZmin",     6 * tag_ctr_arr_h(YXminZmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_YXminZmax    ("particles YXminZmax",     6 * tag_ctr_arr_h(YXminZmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_YXmaxZmin    ("particles YXmaxZmin",     6 * tag_ctr_arr_h(YXmaxZmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_YXmaxZmax    ("particles YXmaxZmax",     6 * tag_ctr_arr_h(YXmaxZmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_XYminZmin    ("particles XYminZmin",     6 * tag_ctr_arr_h(XYminZmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_XYminZmax    ("particles XYminZmax",     6 * tag_ctr_arr_h(XYminZmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_XYmaxZmin    ("particles XYmaxZmin",     6 * tag_ctr_arr_h(XYmaxZmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_XYmaxZmax    ("particles XYmaxZmax",     6 * tag_ctr_arr_h(XYmaxZmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_XminYminZmin ("particles XminYminZmin",  6 * tag_ctr_arr_h(XminYminZmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_XminYminZmax ("particles XminYminZmax",  6 * tag_ctr_arr_h(XminYminZmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_XminYmaxZmin ("particles XminYmaxZmin",  6 * tag_ctr_arr_h(XminYmaxZmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_XminYmaxZmax ("particles XminYmaxZmax",  6 * tag_ctr_arr_h(XminYmaxZmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_XmaxYminZmin ("particles XmaxYminZmin",  6 * tag_ctr_arr_h(XmaxYminZmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_XmaxYminZmax ("particles XmaxYminZmax",  6 * tag_ctr_arr_h(XmaxYminZmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_XmaxYmaxZmin ("particles XmaxYmaxZmin",  6 * tag_ctr_arr_h(XmaxYmaxZmin));
+  Kokkos::View<double *,  CudaSpace> tag_array_XmaxYmaxZmax ("particles XmaxYmaxZmax",  6 * tag_ctr_arr_h(XmaxYmaxZmax));
+  Kokkos::View<double *,  CudaSpace> tag_array_BDRY_OUT     ("particles BDRY_OUT",      6 * tag_ctr_arr_h(BDRY_OUT));
+
+  // Make a master tag view that stores the pointers to each of the 28 views
+  Kokkos::View<double*, CudaSpace> all_tags[28] = {
+                                                    tag_array_XYZ         ,
+                                                    tag_array_YZXmin      ,
+                                                    tag_array_YZXmax      ,
+                                                    tag_array_XZYmin      ,
+                                                    tag_array_XZYmax      ,
+                                                    tag_array_XYZmin      ,
+                                                    tag_array_XYZmax      ,
+                                                    tag_array_ZXminYmin   ,
+                                                    tag_array_ZXminYmax   ,
+                                                    tag_array_ZXmaxYmin   ,
+                                                    tag_array_ZXmaxYmax   ,
+                                                    tag_array_YXminZmin   ,
+                                                    tag_array_YXminZmax   ,
+                                                    tag_array_YXmaxZmin   ,
+                                                    tag_array_YXmaxZmax   ,
+                                                    tag_array_XYminZmin   ,
+                                                    tag_array_XYminZmax   ,
+                                                    tag_array_XYmaxZmin   ,
+                                                    tag_array_XYmaxZmax   ,
+                                                    tag_array_XminYminZmin,
+                                                    tag_array_XminYminZmax,
+                                                    tag_array_XminYmaxZmin,
+                                                    tag_array_XminYmaxZmax,
+                                                    tag_array_XmaxYminZmin,
+                                                    tag_array_XmaxYminZmax,
+                                                    tag_array_XmaxYmaxZmin,
+                                                    tag_array_XmaxYmaxZmax,
+                                                    tag_array_BDRY_OUT    
+                                                  };
+
+  /*  SS: Can we make this work with reduction instead of atomic?
+  */
+  // The Kokkos::View below keeps track of how many particles for a given type of tag
+  // are populated in the respective tag array in the parallel_for
+  Kokkos::View<size_t [28], CudaSpace> tag_array_counter ("tag counter array");
+  Kokkos::parallel_for(
+    "Loop to package different tag particles",
+    Kokkos::RangePolicy<Kokkos::Cuda>(0, nparticles),
+    KOKKOS_LAMBDA(const std::size_t p) {
+      const size_t tag              = tag_arr(p);
+      const size_t tag_ctr          = tag_array_counter(tag);
+      all_tags[tag](tag_ctr)        = x_arr(p);
+      all_tags[tag](tag_ctr + 1)    = y_arr(p);
+      all_tags[tag](tag_ctr + 2)    = z_arr(p);
+      all_tags[tag](tag_ctr + 3)    = vx_arr(p);
+      all_tags[tag](tag_ctr + 4)    = vy_arr(p);
+      all_tags[tag](tag_ctr + 5)    = vz_arr(p);
+      Kokkos::atomic_add(&tag_array_counter(tag), 6);
+    });
 }
