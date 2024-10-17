@@ -40,7 +40,6 @@ enum IndexPosition {
 };
 */
 
-
 struct MeshBlock {
   float xmin, xmax, ymin, ymax, zmin, zmax;
   float dx, dy, dz;
@@ -59,7 +58,6 @@ struct MeshBlock {
     , dz(dxi_mb[2] / nxi_cells[2]) {
     std::cout << "MeshBlock Initialized" << std::endl;
   }
-
 };
 
 #endif

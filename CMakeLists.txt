@@ -4,6 +4,7 @@ project(ParticlePusher LANGUAGES CXX)
 # Set global configurations
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # HH: I think this is not needed
 #
