@@ -1,31 +1,37 @@
 #ifndef PARTICLE_TRACKER_H
 #define PARTICLE_TRACKER_H
 
-#include "grid.hpp"
-#include "util.hpp"
-#include <random>
+#include "global.hpp"
 
+#include <Kokkos_Core.hpp>
 
-void InitializeParticleArrays(std::size_t           nparticles,
-                              const MeshBlock&      myMeshBlock,
-                              Kokkos::View<short*,  CudaSpace>  tag_arr,
-                              Kokkos::View<double*, CudaSpace>  x_arr,
-                              Kokkos::View<double*, CudaSpace>  y_arr,
-                              Kokkos::View<double*, CudaSpace>  z_arr,
-                              Kokkos::View<double*, CudaSpace>  vx_arr,
-                              Kokkos::View<double*, CudaSpace>  vy_arr,
-                              Kokkos::View<double*, CudaSpace>  vz_arr);
+#include <array>
 
+void InitializeParticleArrays(std::size_t,
+                              const std::array<int, 6>&,
+                              Kokkos::View<short*>,
+                              Kokkos::View<int*>,
+                              Kokkos::View<int*>,
+                              Kokkos::View<int*>,
+                              Kokkos::View<float*>,
+                              Kokkos::View<float*>,
+                              Kokkos::View<float*>,
+                              Kokkos::View<real_t*>,
+                              Kokkos::View<real_t*>,
+                              Kokkos::View<real_t*>);
 
-void PushParticles( std::size_t           nparticles,
-                    Kokkos::View<double[6],     Host>  MB_bounds_h,
-                    Kokkos::View<short*,      CudaSpace>  tag_arr,
-                    Kokkos::View<size_t[28],  Host>  tag_ctr_arr_h,
-                    Kokkos::View<double*,     CudaSpace>  x_arr,
-                    Kokkos::View<double*,     CudaSpace>  y_arr,
-                    Kokkos::View<double*,     CudaSpace>  z_arr,
-                    Kokkos::View<double*,     CudaSpace>  vx_arr,
-                    Kokkos::View<double*,     CudaSpace>  vy_arr,
-                    Kokkos::View<double*,     CudaSpace>  vz_arr,
-                    double                    dt);
+void PushParticles(std::size_t,
+                   const std::array<int, 6>&,
+                   Kokkos::View<size_t[28]>,
+                   Kokkos::View<short*>,
+                   Kokkos::View<int*>,
+                   Kokkos::View<int*>,
+                   Kokkos::View<int*>,
+                   Kokkos::View<float*>,
+                   Kokkos::View<float*>,
+                   Kokkos::View<float*>,
+                   Kokkos::View<real_t*>,
+                   Kokkos::View<real_t*>,
+                   Kokkos::View<real_t*>,
+                   double);
 #endif

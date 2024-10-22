@@ -1,77 +1,62 @@
-#include "grid.hpp"
+#include "global.hpp"
 #include "particle_tracker.hpp"
-#include "util.hpp"
+
+#include <Kokkos_Core.hpp>
+
+#include <iostream>
 
 auto main(int argc, char* argv[]) -> int {
   // Set boundaries to the grid
-  float xmin  = 0.;
-  float dx_mb = 1.;
-  float ymin  = 0.;
-  float dy_mb = 1.;
-  float zmin  = 0.;
-  float dz_mb = 1.;
-  int   nx    = 50;
-  int   ny    = 50;
-  int   nz    = 50;
-
-  const std::vector<float> xi_min_mb = { xmin, ymin, zmin };
-  const std::vector<float> dxi_mb    = { dx_mb, dy_mb, dz_mb };
-  const std::vector<int>   nxi_cells = { nx, ny, nz };
-  auto myMeshBlock                   = MeshBlock(xi_min_mb, dxi_mb, nxi_cells);
-
-  // Create arrays for meshblock boundaries
-  std::vector<float> xmb, ymb, zmb;
+  int nx = 50;
+  int ny = 70;
+  int nz = 63;
 
   Kokkos::initialize(argc, argv);
   {
-    // Initialize a few particles
-    const int64_t nparticles = 100000;
-    double        dt         = 0.1;
+    const std::size_t nparticles = 100000;
+    real_t            dt         = 0.1;
 
     // Initialize Particle Arrays
     // SS: Just being a bit more explicit about what memory space the Views are initialized
-    Kokkos::View<short*,      CudaSpace>  tag_arr("Tag array", nparticles);
-    Kokkos::View<double*,     CudaSpace>  x_arr("x-position array", nparticles);
-    Kokkos::View<double*,     CudaSpace>  y_arr("y-position array", nparticles);
-    Kokkos::View<double*,     CudaSpace>  z_arr("z-position array", nparticles);
-    Kokkos::View<double*,     CudaSpace>  vx_arr("x-velocity array", nparticles);
-    Kokkos::View<double*,     CudaSpace>  vy_arr("y-velocity array", nparticles);
-    Kokkos::View<double*,     CudaSpace>  vz_arr("z-velocity array", nparticles);
-    Kokkos::View<double[6],   Host>  MB_bounds_h("Bounds of the MeshBlock");
-    Kokkos::View<size_t[28],  Host>  tag_ctr_arr_h("Tag counter array");
-
-    // Populate the MB bounds array on Host
-    MB_bounds_h(0) = myMeshBlock.xmin;
-    MB_bounds_h(1) = myMeshBlock.xmax;
-    MB_bounds_h(2) = myMeshBlock.ymin;
-    MB_bounds_h(3) = myMeshBlock.ymax;
-    MB_bounds_h(4) = myMeshBlock.zmin;
-    MB_bounds_h(5) = myMeshBlock.zmax;
-
+    Kokkos::View<short*>          tag_arr("Tag array", nparticles);
+    Kokkos::View<int*>            i_arr("i-position array", nparticles);
+    Kokkos::View<int*>            j_arr("j-position array", nparticles);
+    Kokkos::View<int*>            k_arr("k-position array", nparticles);
+    Kokkos::View<float*>          dx_arr("dx-position array", nparticles);
+    Kokkos::View<float*>          dy_arr("dy-position array", nparticles);
+    Kokkos::View<float*>          dz_arr("dz-position array", nparticles);
+    Kokkos::View<real_t*>         vx_arr("x-velocity array", nparticles);
+    Kokkos::View<real_t*>         vy_arr("y-velocity array", nparticles);
+    Kokkos::View<real_t*>         vz_arr("z-velocity array", nparticles);
+    Kokkos::View<std::size_t[28]> tag_ctr_arr("Tag counter array");
 
     InitializeParticleArrays(nparticles,
-                             myMeshBlock,
+                             { nx, ny, nz },
                              tag_arr,
-                             x_arr,
-                             y_arr,
-                             z_arr,
+                             i_arr,
+                             j_arr,
+                             k_arr,
+                             dx_arr,
+                             dy_arr,
+                             dz_arr,
                              vx_arr,
                              vy_arr,
                              vz_arr);
-    
-    
+
     PushParticles(nparticles,
-                  MB_bounds_h,
+                  { nx, ny, nz },
+                  tag_ctr_arr,
                   tag_arr,
-                  tag_ctr_arr_h,
-                  x_arr,
-                  y_arr,
-                  z_arr,
+                  i_arr,
+                  j_arr,
+                  k_arr,
+                  dx_arr,
+                  dy_arr,
+                  dz_arr,
                   vx_arr,
                   vy_arr,
                   vz_arr,
                   dt);
-    
   }
   Kokkos::fence();
   std::cout << "Particle push successful" << std::endl;

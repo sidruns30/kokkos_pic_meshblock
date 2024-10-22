@@ -1,17 +1,9 @@
-# HH: see my comment in root CMakelists.txt
-# 
-add_subdirectory(grid)
-add_subdirectory(particle_tracker)
-add_subdirectory(utils)
+set(EXECUTABLE main.xc)
 
-# HH: no need to include the header files here.
-#
-# add_executable(main.xc main.cpp include/util.hpp)
+file(GLOB_RECURSE SOURCES "*.cpp")
 
-add_executable(main.xc main.cpp)
+add_executable(${EXECUTABLE} ${SOURCES})
 
-# HH: you don't need to include one-by-one for each library. (see root CMakeLists.txt)
-#
-# target_include_directories(main.xc PUBLIC ../include)
-
-target_link_libraries(main.xc util grid particle_tracker)
+target_include_directories(${EXECUTABLE}
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(${EXECUTABLE} Kokkos::kokkos)
