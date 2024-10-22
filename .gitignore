@@ -5,3 +5,6 @@ build
 *.png
 
 *.log
+
+.cache/
+*.json

@@ -6,6 +6,7 @@
 #include <Kokkos_Core.hpp>
 
 #include <array>
+#include <iostream>
 #include <random>
 
 // Initialize the particle arrays
@@ -56,6 +57,8 @@ void InitializeParticleArrays(std::size_t               nparticles,
     vx_arr_h(p)  = dis_vel(gen);
     vy_arr_h(p)  = dis_vel(gen);
     vz_arr_h(p)  = dis_vel(gen);
+
+    tag_arr_h(p) = 1;
   }
 
   Kokkos::deep_copy(i_arr, i_arr_h);
@@ -67,6 +70,9 @@ void InitializeParticleArrays(std::size_t               nparticles,
   Kokkos::deep_copy(vx_arr, vx_arr_h);
   Kokkos::deep_copy(vy_arr, vy_arr_h);
   Kokkos::deep_copy(vz_arr, vz_arr_h);
+  Kokkos::deep_copy(tag_arr, tag_arr_h);
+  Kokkos::fence();
+  std::cout << "Particles initialized\n";
 }
 
 // Particles are pushed on the device (GPU)
@@ -128,4 +134,28 @@ void PushParticles(std::size_t               nparticles,
                            k_arr(p) >= zmax);
       Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
     });
+  Kokkos::fence();
+  std::cout << "Particles pushed\n";
+}
+
+void PrintTags(std::size_t                   npart,
+               Kokkos::View<std::size_t[28]> npart_per_tag,
+               Kokkos::View<short*>          tags,
+               bool                          print_ctrs) {
+  auto tags_h = Kokkos::create_mirror_view(tags);
+
+  Kokkos::deep_copy(tags_h, tags);
+
+  for (auto i = 0; i < npart; i++) {
+    std::cout << tags_h(i) << " ";
+  }
+  std::cout << std::endl << std::endl;
+  if (print_ctrs) {
+    auto npart_per_tag_h = Kokkos::create_mirror_view(npart_per_tag);
+    Kokkos::deep_copy(npart_per_tag_h, npart_per_tag);
+    std::cout << "Number of particles per tag:\n";
+    for (auto i = 0; i < 28; i++) {
+      std::cout << "Tag " << i << ": " << npart_per_tag_h(i) << std::endl;
+    }
+  }
 }

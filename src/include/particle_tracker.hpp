@@ -22,7 +22,7 @@ void InitializeParticleArrays(std::size_t,
 
 void PushParticles(std::size_t,
                    const std::array<int, 6>&,
-                   Kokkos::View<size_t[28]>,
+                   Kokkos::View<std::size_t[28]>,
                    Kokkos::View<short*>,
                    Kokkos::View<int*>,
                    Kokkos::View<int*>,
@@ -34,4 +34,10 @@ void PushParticles(std::size_t,
                    Kokkos::View<real_t*>,
                    Kokkos::View<real_t*>,
                    double);
+
+void PrintTags(std::size_t,
+               Kokkos::View<std::size_t[28]>,
+               Kokkos::View<short*>,
+               bool = true);
+
 #endif

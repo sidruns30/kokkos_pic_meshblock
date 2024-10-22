@@ -1,5 +1,6 @@
 #include "global.hpp"
 #include "particle_tracker.hpp"
+#include "sorter.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -13,8 +14,8 @@ auto main(int argc, char* argv[]) -> int {
 
   Kokkos::initialize(argc, argv);
   {
-    const std::size_t nparticles = 100000;
-    real_t            dt         = 0.1;
+    const std::size_t nparticles = 10000000;
+    real_t            dt         = 5.0;
 
     // Initialize Particle Arrays
     // SS: Just being a bit more explicit about what memory space the Views are initialized
@@ -31,7 +32,7 @@ auto main(int argc, char* argv[]) -> int {
     Kokkos::View<std::size_t[28]> tag_ctr_arr("Tag counter array");
 
     InitializeParticleArrays(nparticles,
-                             { nx, ny, nz },
+                             { 0, nx, 0, ny, 0, nz },
                              tag_arr,
                              i_arr,
                              j_arr,
@@ -44,7 +45,7 @@ auto main(int argc, char* argv[]) -> int {
                              vz_arr);
 
     PushParticles(nparticles,
-                  { nx, ny, nz },
+                  { 0, nx, 0, ny, 0, nz },
                   tag_ctr_arr,
                   tag_arr,
                   i_arr,
@@ -57,6 +58,12 @@ auto main(int argc, char* argv[]) -> int {
                   vy_arr,
                   vz_arr,
                   dt);
+
+    // PrintTags(nparticles, tag_ctr_arr, tag_arr, false);
+
+    Sort(nparticles, tag_arr, i_arr, j_arr, k_arr, dx_arr, dy_arr, dz_arr, vx_arr, vy_arr, vz_arr);
+
+    // PrintTags(nparticles, tag_ctr_arr, tag_arr);
   }
   Kokkos::fence();
   std::cout << "Particle push successful" << std::endl;
