@@ -1,4 +1,4 @@
-#include "sorter.hpp"
+#include "sorter_entity.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Sort.hpp>
@@ -6,7 +6,7 @@
 #include <chrono>
 #include <utility>
 
-void Sort(std::size_t           nparticles,
+void SortEntity(std::size_t           nparticles,
           Kokkos::View<short*>  tag_arr,
           Kokkos::View<int*>    i_arr,
           Kokkos::View<int*>    j_arr,
@@ -17,7 +17,7 @@ void Sort(std::size_t           nparticles,
           Kokkos::View<real_t*> vx_arr,
           Kokkos::View<real_t*> vy_arr,
           Kokkos::View<real_t*> vz_arr) {
-  auto start              = std::chrono::high_resolution_clock::now();
+  TIMER_START(SortEntity);
   using KeyType           = Kokkos::View<short*>;
   using BinOp             = BinTag<KeyType>;
   const std::size_t ntags = 28;
@@ -28,9 +28,6 @@ void Sort(std::size_t           nparticles,
                                          bin_op,
                                          false);
   Sorter.create_permute_vector();
-
-  Kokkos::fence();
-  auto end1 = std::chrono::high_resolution_clock::now();
 
   Sorter.sort(Kokkos::subview(tag_arr, slice));
   Sorter.sort(Kokkos::subview(i_arr, slice));
@@ -43,15 +40,7 @@ void Sort(std::size_t           nparticles,
   Sorter.sort(Kokkos::subview(vy_arr, slice));
   Sorter.sort(Kokkos::subview(vz_arr, slice));
   // sort others ..
-  Kokkos::fence();
-  auto end2 = std::chrono::high_resolution_clock::now();
-  std::cout
-    << "Permute vector time: "
-    << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start).count()
-    << " ms\n";
-  std::cout
-    << "Sorting time: "
-    << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - end1).count()
-    << " ms\n";
+  TIMER_STOP(SortEntity);
   std::cout << "Particles sorted\n";
+  return;
 }

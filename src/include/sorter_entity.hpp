@@ -1,8 +1,8 @@
-#ifndef SORTER_H
-#define SORTER_H
+#ifndef SORTER_ENTITY_H
+#define SORTER_ENTITY_H
 
 #include "global.hpp"
-
+#include "timer.hpp"
 #include <Kokkos_Core.hpp>
 
 template <class KeyViewType>
@@ -27,7 +27,7 @@ private:
   const int m_max_bins;
 };
 
-void Sort(std::size_t,
+void SortEntity(std::size_t,
           Kokkos::View<short*>,
           Kokkos::View<int*>,
           Kokkos::View<int*>,

@@ -1,9 +1,10 @@
 #include "global.hpp"
 #include "particle_tracker.hpp"
-#include "sorter.hpp"
+#include "sorter_entity.hpp"
+#include "sorter_buffer.hpp"
+#include "timer.hpp"
 
 #include <Kokkos_Core.hpp>
-
 #include <iostream>
 
 auto main(int argc, char* argv[]) -> int {
@@ -14,11 +15,11 @@ auto main(int argc, char* argv[]) -> int {
 
   Kokkos::initialize(argc, argv);
   {
-    const std::size_t nparticles = 10000000;
+    const std::size_t nparticles = static_cast<int>(argc) > 1 ? std::stoi(argv[1]) : 100;
     real_t            dt         = 5.0;
 
+    std::cout << "Number of particles: " << nparticles << std::endl;
     // Initialize Particle Arrays
-    // SS: Just being a bit more explicit about what memory space the Views are initialized
     Kokkos::View<short*>          tag_arr("Tag array", nparticles);
     Kokkos::View<int*>            i_arr("i-position array", nparticles);
     Kokkos::View<int*>            j_arr("j-position array", nparticles);
@@ -60,14 +61,34 @@ auto main(int argc, char* argv[]) -> int {
                   dt);
 
     // PrintTags(nparticles, tag_ctr_arr, tag_arr, false);
-
-    Sort(nparticles, tag_arr, i_arr, j_arr, k_arr, dx_arr, dy_arr, dz_arr, vx_arr, vy_arr, vz_arr);
-
-    // PrintTags(nparticles, tag_ctr_arr, tag_arr);
+    SortEntity( nparticles,
+                tag_arr,
+                i_arr,
+                j_arr,
+                k_arr,
+                dx_arr,
+                dy_arr,
+                dz_arr,
+                vx_arr,
+                vy_arr,
+                vz_arr);
+    SortBuffer( nparticles,
+                tag_arr, 
+                tag_ctr_arr, 
+                i_arr, 
+                j_arr, 
+                k_arr, 
+                dx_arr, 
+                dy_arr, 
+                dz_arr, 
+                vx_arr, 
+                vy_arr, 
+                vz_arr);
+    //PrintTags(nparticles, tag_ctr_arr, tag_arr);
   }
-  Kokkos::fence();
   std::cout << "Particle push successful" << std::endl;
   Kokkos::finalize();
+
 
   return 0;
 }
