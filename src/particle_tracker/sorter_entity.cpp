@@ -39,7 +39,6 @@ void SortEntity(std::size_t           nparticles,
   Sorter.sort(Kokkos::subview(vx_arr, slice));
   Sorter.sort(Kokkos::subview(vy_arr, slice));
   Sorter.sort(Kokkos::subview(vz_arr, slice));
-  // sort others ..
   TIMER_STOP(SortEntity);
   std::cout << "Particles sorted\n";
   return;

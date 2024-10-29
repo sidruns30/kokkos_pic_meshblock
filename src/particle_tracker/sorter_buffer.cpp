@@ -50,7 +50,7 @@ void SortBuffer(std::size_t                     nparticles,
     });
 
   // Array to keep track of number of elements initialized in the buffer
-  Kokkos::View<size_t[28]>       buffer_ctr("buffer_ctr", nparticles);
+  Kokkos::View<size_t[28]>       buffer_ctr("buffer_ctr");
 
   // Begin populating
   Kokkos::parallel_for(
@@ -62,7 +62,7 @@ void SortBuffer(std::size_t                     nparticles,
     const auto local_index    = Kokkos::atomic_fetch_add(&buffer_ctr(tag), 1);
     const auto global_index   = tag_cumulative(tag) + local_index;
 
-    tag_buffer(global_index)  = tag_arr(p);
+    tag_buffer(global_index)  = tag;
     i_buffer(global_index)    = i_arr(p);
     j_buffer(global_index)    = j_arr(p);
     k_buffer(global_index)    = k_arr(p);
@@ -74,8 +74,24 @@ void SortBuffer(std::size_t                     nparticles,
     vz_buffer(global_index)   = vz_arr(p);
     });
 
-  // SS: A little danger here since the memory pointing to the original
-  //     arrays is not freed.
+  // Copy elements from buffer arrays to main arrays
+  Kokkos::parallel_for(
+    "Copy buffer to main arrays",
+    Kokkos::RangePolicy<Kokkos::Cuda>(0, nparticles),
+    KOKKOS_LAMBDA(const std::size_t p) {
+      tag_arr(p) = tag_buffer(p);
+      i_arr(p)   = i_buffer(p);
+      j_arr(p)   = j_buffer(p);
+      k_arr(p)   = k_buffer(p);
+      dx_arr(p)  = dx_buffer(p);
+      dy_arr(p)  = dy_buffer(p);
+      dz_arr(p)  = dz_buffer(p);
+      vx_arr(p)  = vx_buffer(p);
+      vy_arr(p)  = vy_buffer(p);
+      vz_arr(p)  = vz_buffer(p);
+    });
+
+  /*
   // Copy back to original arrays
   tag_arr                     = tag_buffer;
   i_arr                       = i_buffer;
@@ -87,7 +103,7 @@ void SortBuffer(std::size_t                     nparticles,
   vx_arr                      = vx_buffer;
   vy_arr                      = vy_buffer;
   vz_arr                      = vz_buffer;
-
+  */
   TIMER_STOP(SortBuffer);
   std::cout << "Particles sorted\n";
   return;
