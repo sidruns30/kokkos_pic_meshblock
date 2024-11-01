@@ -12,7 +12,7 @@
 */
 void SortBuffer(std::size_t                     nparticles,
                 Kokkos::View<short*>            tag_arr,
-                const Kokkos::View<size_t[28]>  tag_ctr_arr,
+                const Kokkos::View<size_t[29]>  tag_ctr_cumsum,
                 Kokkos::View<int*>              i_arr,
                 Kokkos::View<int*>              j_arr,
                 Kokkos::View<int*>              k_arr,
@@ -37,18 +37,6 @@ void SortBuffer(std::size_t                     nparticles,
   Kokkos::View<real_t*>     vy_buffer("vy_buffer", nparticles);
   Kokkos::View<real_t*>     vz_buffer("vz_buffer", nparticles);
 
-  // Make a cumulative array of the tag counts
-  Kokkos::View<size_t[29]> tag_cumulative("tag_cumulative", 28);
-  Kokkos::parallel_scan(
-    "Tag cumulative scan",
-    Kokkos::RangePolicy<Kokkos::Cuda>(0, 28),
-    KOKKOS_LAMBDA(const std::size_t i, size_t& update, const bool final) {
-      update += tag_ctr_arr(i);
-      if (final) {
-        tag_cumulative(i + 1) = update;
-      }
-    });
-
   // Array to keep track of number of elements initialized in the buffer
   Kokkos::View<size_t[28]>       buffer_ctr("buffer_ctr");
 
@@ -60,7 +48,7 @@ void SortBuffer(std::size_t                     nparticles,
 
     const auto tag            = tag_arr(p);
     const auto local_index    = Kokkos::atomic_fetch_add(&buffer_ctr(tag), 1);
-    const auto global_index   = tag_cumulative(tag) + local_index;
+    const auto global_index   = tag_ctr_cumsum(tag) + local_index;
 
     tag_buffer(global_index)  = tag;
     i_buffer(global_index)    = i_arr(p);
@@ -75,6 +63,7 @@ void SortBuffer(std::size_t                     nparticles,
     });
 
   // Copy elements from buffer arrays to main arrays
+  /*
   Kokkos::parallel_for(
     "Copy buffer to main arrays",
     Kokkos::RangePolicy<Kokkos::Cuda>(0, nparticles),
@@ -90,8 +79,8 @@ void SortBuffer(std::size_t                     nparticles,
       vy_arr(p)  = vy_buffer(p);
       vz_arr(p)  = vz_buffer(p);
     });
-
-  /*
+  */
+  
   // Copy back to original arrays
   tag_arr                     = tag_buffer;
   i_arr                       = i_buffer;
@@ -103,7 +92,7 @@ void SortBuffer(std::size_t                     nparticles,
   vx_arr                      = vx_buffer;
   vy_arr                      = vy_buffer;
   vz_arr                      = vz_buffer;
-  */
+  
   TIMER_STOP(SortBuffer);
   std::cout << "Particles sorted\n";
   return;

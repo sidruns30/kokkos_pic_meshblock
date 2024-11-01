@@ -78,7 +78,7 @@ void InitializeParticleArrays(std::size_t               nparticles,
 // Particles are pushed on the device (GPU)
 void PushParticles(std::size_t               nparticles,
                    const std::array<int, 6>& meshblock,
-                   Kokkos::View<size_t[28]>  tag_ctr_arr,
+                   Kokkos::View<size_t[29]>  tag_ctr_cumsum,
                    Kokkos::View<short*>      tag_arr,
                    Kokkos::View<int*>        i_arr,
                    Kokkos::View<int*>        j_arr,
@@ -97,14 +97,7 @@ void PushParticles(std::size_t               nparticles,
   const int zmin = meshblock[4];
   const int zmax = meshblock[5];
 
-  /* SS:  The next long bit is to compute the tag
-          I am currently not sure how I can take a KOKKOS_INLINE_FUNCTION
-          e.g., `ComputeTag' from outside and put it inside this lambda.
-          Therefore, I am performing the compute tag operation explicitly
-          inside this lambda.
-          Additionally, I don't know how to define the MeshBlock class on
-          the device. So I pass the MB_bounds Kokkos view.
-  */
+  Kokkos::View<size_t[28]> tag_ctr_arr("Tag counter array");
 
   Kokkos::parallel_for(
     "Particle pusher loop",
@@ -134,6 +127,18 @@ void PushParticles(std::size_t               nparticles,
                            k_arr(p) >= zmax);
       Kokkos::atomic_increment(&tag_ctr_arr(tag_arr(p)));
     });
+
+  // Make a cumulative array of the tag counts
+  Kokkos::parallel_scan(
+    "Tag cumulative scan",
+    Kokkos::RangePolicy<Kokkos::Cuda>(0, 28),
+    KOKKOS_LAMBDA(const std::size_t i, size_t& update, const bool final) {
+      update += tag_ctr_arr(i);
+      if (final) {
+        tag_ctr_cumsum(i + 1) = update;
+      }
+    });
+
   Kokkos::fence();
   std::cout << "Particles pushed\n";
 }

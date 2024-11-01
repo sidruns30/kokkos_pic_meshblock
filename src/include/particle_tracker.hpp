@@ -22,7 +22,7 @@ void InitializeParticleArrays(std::size_t,
 
 void PushParticles(std::size_t,
                    const std::array<int, 6>&,
-                   Kokkos::View<std::size_t[28]>,
+                   Kokkos::View<std::size_t[29]>,
                    Kokkos::View<short*>,
                    Kokkos::View<int*>,
                    Kokkos::View<int*>,
